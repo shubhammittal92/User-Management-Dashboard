@@ -7,10 +7,12 @@ const USERS_PER_PAGE = 5;
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
-  const [formData, setFormData] = useState({ id: "", name: "", email: "", department: "" });
+  const [formData, setFormData] = useState({ id: "", name: "", email: "", city: "" });
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [theme, setTheme] = useState("light"); // State to handle theme
+  const [searchQuery, setSearchQuery] = useState(""); // State to handle search query
 
   useEffect(() => {
     fetchUsers();
@@ -20,9 +22,19 @@ const UserManagement = () => {
     setLoading(true);
     try {
       const response = await axios.get(API_URL);
-      setUsers(response.data);
+      const usersWithCity = response.data.map(user => ({
+        ...user,
+        city: user.address.city // Assuming city is in user.address.city
+      }));
+      setUsers(usersWithCity);
     } catch (error) {
-      setError("Failed to fetch users");
+      if (error.response) {
+        setError(`Failed to fetch users: ${error.response.data.message || 'Server Error'}`);
+      } else if (error.request) {
+        setError("Failed to fetch users: No response from server");
+      } else {
+        setError(`Failed to fetch users: ${error.message}`);
+      }
     } finally {
       setLoading(false);
     }
@@ -32,30 +44,65 @@ const UserManagement = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handleSearch = (e) => {
+    setSearchQuery(e.target.value);
+    setCurrentPage(1); // Reset to the first page whenever the search query changes
+  };
+
+  // Filter users based on search query
+  const filteredUsers = users.filter(user =>
+    user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    user.email.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const indexOfLastUser = currentPage * USERS_PER_PAGE;
+  const indexOfFirstUser = indexOfLastUser - USERS_PER_PAGE;
+  const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
+
   const handleAddUser = async (e) => {
     e.preventDefault();
-    if (!formData.name || !formData.email) {
-      setError("Name and Email are required");
+    
+    if (!formData.name || !formData.email || !formData.city) {
+      setError("All fields must be filled");
       return;
     }
-
-    // Check if user with the same email already exists
+  
+    if (!formData.email.includes('@')) {
+      setError("Email must include '@'");
+      return;
+    }
+  
+    if (formData.name.length <= 3) {
+      setError("Name must be greater than 3 characters");
+      return;
+    }
+  
+    if (formData.city.length <= 3) {
+      setError("City must be greater than 3 characters");
+      return;
+    }
+  
     const isEmailDuplicate = users.some(user => user.email === formData.email);
     if (isEmailDuplicate) {
       setError("User with this email already exists");
       return;
     }
-
+  
     setLoading(true);
     try {
-      const newUser = { ...formData };
-      // Simulate a successful API response (JSONPlaceholder won't actually persist data)
-      const response = await axios.post(API_URL, newUser);
-      setUsers([...users, response.data]); // Add the new user to the local state
-      setFormData({ id: "", name: "", email: "", department: "" });
+      const newUser = { ...formData, id: users.length + 1 };
+      await axios.post(API_URL, newUser);
+      setUsers([...users, newUser]);
+      setFormData({ id: "", name: "", email: "", city: "" });
       setError(null);
     } catch (error) {
-      setError("Failed to add user");
+      if (error.response) {
+        setError(`Failed to add user: ${error.response.data.message || 'Server Error'}`);
+      } else if (error.request) {
+        setError("Failed to add user: No response from server");
+      } else {
+        setError(`Failed to add user: ${error.message}`);
+      }
     } finally {
       setLoading(false);
     }
@@ -63,65 +110,115 @@ const UserManagement = () => {
 
   const handleUpdateUser = async (e) => {
     e.preventDefault();
-
+  
     if (!formData.id) {
       setError("Please select a user to update");
       return;
     }
-
-    if (!formData.name || !formData.email) {
-      setError("Name and Email are required for update");
+  
+    if (!formData.name || !formData.email || !formData.city) {
+      setError("All fields must be filled");
       return;
     }
-
+  
+    if (!formData.email.includes('@')) {
+      setError("Email must include '@'");
+      return;
+    }
+  
+    if (formData.name.length < 3) {
+      setError("Name must be greater than 3 characters");
+      return;
+    }
+  
+    if (formData.city.length < 3) {
+      setError("City must be greater than 3 characters");
+      return;
+    }
+  
+    const userToUpdate = users.find(user => user.id === Number(formData.id));
+  
+    if (!userToUpdate) {
+      setError("User not found");
+      return;
+    }
+  
     setLoading(true);
     try {
-      // Update the user data using PUT request to the API
-      const updatedUser = { ...formData };
-      await axios.put(`${API_URL}/${formData.id}`, updatedUser);
-      
-      // Update the user in the local state
+      const updatedUser = { ...formData, id: Number(formData.id) };
+  
       setUsers(users.map(user => user.id === updatedUser.id ? updatedUser : user));
-      setFormData({ id: "", name: "", email: "", department: "" });
+      setFormData({ id: "", name: "", email: "", city: "" });
       setError(null);
     } catch (error) {
-      setError("Failed to update user");
+      if (error.response) {
+        setError(`Failed to update user: ${error.response.data.message || 'Server Error'}`);
+      } else if (error.request) {
+        setError("Failed to update user: No response from server");
+      } else {
+        setError(`Failed to update user: ${error.message}`);
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const handleEdit = (user) => {
-    setFormData({ ...user });
-    setError(null); // Clear any previous error
+    setFormData({ ...user, id: String(user.id) });
+    setError(null);
   };
 
   const handleDelete = async (id) => {
     setLoading(true);
     try {
       await axios.delete(`${API_URL}/${id}`);
-      setUsers(users.filter(user => user.id !== id));
+      const updatedUsers = users.filter(user => user.id !== id);
+      setUsers(updatedUsers);
+
+      // Check if current page has no entries, if so, go to the previous page
+      if (updatedUsers.length <= (currentPage - 1) * USERS_PER_PAGE) {
+        setCurrentPage(currentPage - 1);
+      }
     } catch (error) {
-      setError("Failed to delete user");
+      if (error.response) {
+        setError(`Failed to delete user: ${error.response.data.message || 'Server Error'}`);
+      } else if (error.request) {
+        setError("Failed to delete user: No response from server");
+      } else {
+        setError(`Failed to delete user: ${error.message}`);
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const indexOfLastUser = currentPage * USERS_PER_PAGE;
-  const indexOfFirstUser = indexOfLastUser - USERS_PER_PAGE;
-  const currentUsers = users.slice(indexOfFirstUser, indexOfLastUser);
+  const toggleTheme = () => {
+    setTheme(theme === "light" ? "dark" : "light");
+  };
 
   return (
-    <div className="container">
-      <h1>User Management</h1>
+    <div className={`container ${theme}-mode`}>
+      <h1>User Management Dashboard</h1>
       {error && <p className="error">{error}</p>}
       {loading && <p className="loading">Loading...</p>}
+
+      <button onClick={toggleTheme} className="theme-toggle-btn">
+        Switch to {theme === "light" ? "Dark" : "Light"} Mode
+      </button>
+
+      {/* Search Bar */}
+      <input
+        type="text"
+        placeholder="Search by Name or Email"
+        value={searchQuery}
+        onChange={handleSearch}
+        className="search-input"
+      />
       
       <form className="form">
         <input type="text" name="name" placeholder="Name" value={formData.name} onChange={handleChange} required />
         <input type="email" name="email" placeholder="Email" value={formData.email} onChange={handleChange} required />
-        <input type="text" name="department" placeholder="Department" value={formData.department} onChange={handleChange} />
+        <input type="text" name="city" placeholder="City" value={formData.city} onChange={handleChange} />
         <div>
           <button onClick={handleAddUser} disabled={loading} className="add-btn">Add User</button>
           <button onClick={handleUpdateUser} disabled={loading || !formData.id} className="update-btn">Update User</button>
@@ -135,7 +232,7 @@ const UserManagement = () => {
               <th>ID</th>
               <th>Name</th>
               <th>Email</th>
-              <th>Department</th>
+              <th>City</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -145,7 +242,7 @@ const UserManagement = () => {
                 <td>{user.id}</td>
                 <td>{user.name}</td>
                 <td>{user.email}</td>
-                <td>{user.department || "N/A"}</td>
+                <td>{user.city || "N/A"}</td>
                 <td className="actions-btn">
                   <button onClick={() => handleEdit(user)} className="edit-btn">Edit</button>
                   <button onClick={() => handleDelete(user.id)} className="delete-btn">Delete</button>
@@ -155,11 +252,21 @@ const UserManagement = () => {
           </tbody>
         </table>
       </div>
-      
+
       <div className="pagination">
-        <button onClick={() => setCurrentPage(currentPage - 1)} disabled={currentPage === 1 || loading} className="page-btn">Previous</button>
+        {currentPage > 1 && (
+          <button onClick={() => setCurrentPage(currentPage - 1)} disabled={loading} className="page-btn">
+            Previous
+          </button>
+        )}
+
         <span className="page-number">{currentPage}</span>
-        <button onClick={() => setCurrentPage(currentPage + 1)} disabled={indexOfLastUser >= users.length || loading} className="page-btn">Next</button>
+
+        {filteredUsers.length > currentPage * USERS_PER_PAGE && (
+          <button onClick={() => setCurrentPage(currentPage + 1)} disabled={loading} className="page-btn">
+            Next
+          </button>
+        )}
       </div>
     </div>
   );
