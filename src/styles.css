@@ -1,0 +1,133 @@
+/* styles.css */
+.container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 16px;
+  }
+  
+  h1 {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+  
+  .error {
+    color: red;
+    text-align: center;
+  }
+  
+  .loading {
+    text-align: center;
+    color: gray;
+  }
+  
+  form {
+    background-color: #f3f4f6;
+    padding: 16px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  input {
+    border: 1px solid #ccc;
+    padding: 8px;
+    width: 100%;
+    border-radius: 4px;
+  }
+  
+  input[type="text"],
+  input[type="email"] {
+    width: 100%;
+  }
+  
+  input[type="text"],
+  input[type="email"],
+  input[type="department"] {
+    width: 100%;
+  }
+  
+  button {
+    padding: 8px 16px;
+    border-radius: 4px;
+    color: white;
+    cursor: pointer;
+    border: none;
+  }
+  
+  button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  .add-btn {
+    background-color: #3b82f6;
+  }
+  
+  .update-btn {
+    background-color: #22c55e;
+  }
+  
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #ccc;
+    margin-top: 16px;
+  }
+  
+  .table th,
+  .table td {
+    padding: 8px;
+    border: 1px solid #ccc;
+    text-align: center;
+  }
+  
+  .table th {
+    background-color: #f1f5f9;
+  }
+  
+  .table tbody tr:hover {
+    background-color: #f9fafb;
+  }
+  
+  .actions-btn {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+  }
+  
+  .edit-btn {
+    background-color: #fbbf24;
+  }
+  
+  .delete-btn {
+    background-color: #ef4444;
+  }
+  
+  .pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 16px;
+    gap: 8px;
+  }
+  
+  .page-btn {
+    background-color: #9ca3af;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+  }
+  
+  .page-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  .page-number {
+    font-size: 1.125rem;
+    align-self: center;
+  }
+  
