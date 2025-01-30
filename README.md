@@ -30,7 +30,9 @@ See the section about [deployment](https://facebook.github.io/create-react-app/d
 ### 'Future Improvements'
 If given more time, I would consider implementing the following improvements:
 
-Backend Integration: Integrate a backend API for managing users and connecting the frontend with a database.
-Advanced User Management: Add role-based access control to manage user permissions.
-Testing: Implement more comprehensive unit and integration tests using libraries like Jest and React Testing Library.
-User Authentication: Add login and authentication features for securing the dashboard.
+### 'Backend Integration:'
+Integrate a backend API for managing users and connecting the frontend with a database.
+### 'Advanced User Management:'
+Add role-based access control to manage user permissions.
+### 'User Authentication:'
+Add login and authentication features for securing the dashboard.
